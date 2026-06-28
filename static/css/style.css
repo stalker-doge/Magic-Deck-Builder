@@ -635,7 +635,7 @@ h1, h2, h3, h4 {
    ----------------------------------------------------------------- */
 .editor-layout {
     display: grid;
-    grid-template-columns: 340px 1fr 300px;
+    grid-template-columns: 360px minmax(0, 1fr) 300px;
     gap: 18px;
     align-items: start;
 }
@@ -748,22 +748,25 @@ h1, h2, h3, h4 {
 }
 .search-results {
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
+    min-width: 0;
     margin-top: 6px;
     display: grid;
     gap: 8px;
-    padding-right: 4px;
+    padding-right: 6px;
 }
 .search-result-card {
     display: flex;
-    gap: 10px;
-    padding: 8px;
+    gap: 9px;
+    padding: 7px 8px;
     background: var(--bg-inset);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     cursor: pointer;
     transition: all 0.18s ease;
     align-items: center;
+    min-width: 0;
 }
 .search-result-card:hover {
     border-color: var(--gold);
@@ -787,9 +790,10 @@ h1, h2, h3, h4 {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    min-width: 0;
+}
+.search-result-card .sr-name .ms {
+    margin-left: 5px;
 }
 .search-result-card .sr-type {
     font-size: 10.5px;
@@ -801,22 +805,24 @@ h1, h2, h3, h4 {
     margin-top: 2px;
     letter-spacing: 0.04em;
 }
-.add-btns { display: flex; gap: 3px; flex-shrink: 0; }
+.add-btns { display: flex; gap: 2px; flex-shrink: 0; }
 .add-btn {
     background:
         linear-gradient(180deg, rgba(255,255,255,0.04), transparent),
         var(--bg-elev-3);
     border: 1px solid var(--border-strong);
     color: var(--ink-muted);
-    padding: 3px 7px;
+    padding: 4px 5px;
     border-radius: 3px;
-    font-size: 9.5px;
+    font-size: 9px;
     font-weight: 700;
     cursor: pointer;
     font-family: var(--font-display);
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     transition: all 0.15s ease;
     box-shadow: 0 1px 0 rgba(0,0,0,0.4);
+    min-width: 26px;
+    line-height: 1;
 }
 .add-btn:hover { color: #fff; transform: translateY(-1px); }
 .add-btn.add-main:hover {
@@ -933,6 +939,7 @@ h1, h2, h3, h4 {
     border: 1px solid transparent;
     transition: all 0.15s ease;
     position: relative;
+    min-width: 0;
 }
 .deck-entry:hover {
     background:
@@ -976,6 +983,7 @@ h1, h2, h3, h4 {
 }
 .deck-entry .entry-name {
     flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -990,7 +998,9 @@ h1, h2, h3, h4 {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 180px;
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 140px;
     letter-spacing: 0.04em;
 }
 .entry-controls { display: flex; gap: 3px; opacity: 0; transition: opacity 0.15s ease; flex-shrink: 0; }
@@ -1221,8 +1231,17 @@ h1, h2, h3, h4 {
 .ms-r { color: var(--c-R); filter: drop-shadow(0 0 4px rgba(194,85,78,0.6)); }
 .ms-g { color: var(--c-G); filter: drop-shadow(0 0 4px rgba(79,143,74,0.6)); }
 .ms-c { color: var(--c-C); filter: drop-shadow(0 0 3px rgba(168,168,168,0.4)); }
-.ms-x, .ms-1, .ms-2, .ms-3, .ms-4, .ms-5, .ms-6, .ms-7, .ms-8, .ms-9 {
-    color: var(--ink-soft);
+/* Generic / colorless mana costs (the digits 0–10 and X/Y/Z).
+   mana-font paints `.ms-cost` dark by default for the classic
+   light-circle look, which reads as black-on-black against our dark
+   mana orbs. The compound `.ms-cost.ms-N` selector (specificity 0,2,0)
+   outranks mana-font's single-class `.ms-cost` rule so the digit
+   finally renders bright. Colored pips keep their own `.ms-w` etc.
+   colors, which this rule never touches. */
+.ms-cost.ms-0, .ms-cost.ms-1, .ms-cost.ms-2, .ms-cost.ms-3, .ms-cost.ms-4,
+.ms-cost.ms-5, .ms-cost.ms-6, .ms-cost.ms-7, .ms-cost.ms-8, .ms-cost.ms-9,
+.ms-cost.ms-10, .ms-cost.ms-x, .ms-cost.ms-y, .ms-cost.ms-z {
+    color: var(--ink);
 }
 
 /* Inline mana pips in search results / names get a subtle orb ring */

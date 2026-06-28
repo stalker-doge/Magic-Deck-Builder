@@ -4,6 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from app import database as db
+from app.commander import deck_legality_report
 from app.models import AddCardRequest, MoveEntryRequest, UpdateEntryRequest
 from app.stats import deck_summary
 
@@ -84,3 +85,16 @@ async def get_entries(deck_id: int):
         raise HTTPException(status_code=404, detail="Deck not found")
     entries = await db.get_deck_entries(deck_id)
     return {"entries": entries}
+
+
+@router.get("/decks/{deck_id}/legality")
+async def get_legality(deck_id: int):
+    """Return a Commander-format legality report for the deck.
+
+    Non-commander formats return a no-op ``{format, legal: True, checks: {}}``.
+    """
+    deck = await db.get_deck(deck_id)
+    if deck is None:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    entries = await db.get_deck_entries(deck_id)
+    return deck_legality_report(deck, entries)

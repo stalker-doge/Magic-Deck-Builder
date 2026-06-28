@@ -5,13 +5,15 @@
     "use strict";
 
     const DECK_ID = window.DECK_ID;
-    const SECTIONS = ["main", "sideboard", "maybe"];
-    const SECTION_LABELS = { main: "Main Deck", sideboard: "Sideboard", maybe: "Maybeboard" };
+    // Sections and labels are injected by the template based on deck format.
+    const SECTIONS = window.SECTIONS || ["main", "sideboard", "maybe"];
+    const SECTION_LABELS = window.SECTION_LABELS || { main: "Main Deck", sideboard: "Sideboard", maybe: "Maybeboard" };
+    const IS_COMMANDER = (window.DECK_FORMAT || "casual") === "commander";
 
     // In-memory state: entries keyed by id, plus per-section ordered arrays.
     const state = {
         entries: new Map(),       // entry_id -> entry object
-        sectionOrder: { main: [], sideboard: [], maybe: [] }, // entry_ids per section
+        sectionOrder: Object.fromEntries(SECTIONS.map(s => [s, []])), // entry_ids per section
     };
 
     // ---------------------------------------------------------------------
@@ -131,6 +133,7 @@
             });
             await reloadEntries();
             window.refreshStats();
+            if (window.refreshLegality) window.refreshLegality();
         } catch (err) {
             alert(`Failed to add card: ${err.message}`);
         }
@@ -151,6 +154,7 @@
             entry.quantity = newQty;
             renderSection(entry.section);
             window.refreshStats();
+            if (window.refreshLegality) window.refreshLegality();
         } catch (err) {
             alert(`Failed to update quantity: ${err.message}`);
         }
@@ -166,6 +170,7 @@
                 .filter(id => id !== entryId);
             renderSection(entry.section);
             window.refreshStats();
+            if (window.refreshLegality) window.refreshLegality();
         } catch (err) {
             alert(`Failed to remove card: ${err.message}`);
         }
@@ -181,6 +186,7 @@
             ingestEntries(data.entries || []);
             renderAllSections();
             window.refreshStats();
+            if (window.refreshLegality) window.refreshLegality();
         } catch (err) {
             console.error("Failed to reload entries:", err);
         }
@@ -188,16 +194,17 @@
 
     function ingestEntries(entries) {
         state.entries.clear();
-        state.sectionOrder = { main: [], sideboard: [], maybe: [] };
-        // Sort by sort_order within section.
-        const bySection = { main: [], sideboard: [], maybe: [] };
+        // Rebuild sectionOrder from the active SECTIONS list.
+        const bySection = Object.fromEntries(SECTIONS.map(s => [s, []]));
+        state.sectionOrder = Object.fromEntries(SECTIONS.map(s => [s, []]));
         for (const e of entries) {
             state.entries.set(e.id, e);
-            bySection[e.section]?.push(e);
+            if (!bySection[e.section]) bySection[e.section] = [];
+            bySection[e.section].push(e);
         }
         for (const section of SECTIONS) {
-            bySection[section].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-            state.sectionOrder[section] = bySection[section].map(e => e.id);
+            (bySection[section] || []).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+            state.sectionOrder[section] = (bySection[section] || []).map(e => e.id);
         }
     }
 
@@ -257,6 +264,7 @@
             renderSection(fromSection);
             if (fromSection !== toSection) renderSection(toSection);
             window.refreshStats();
+            if (window.refreshLegality) window.refreshLegality();
         } catch (err) {
             alert(`Move failed: ${err.message}`);
             await reloadEntries();
@@ -370,6 +378,9 @@
         results.innerHTML = cards.map(card => {
             const img = card.image_small || "";
             const manaHtml = window.renderMana(card.mana_cost || "");
+            const cmdBtn = IS_COMMANDER
+                ? `<button class="add-btn add-cmd" data-section="commander" title="Set as Commander">+C</button>`
+                : "";
             return `
                 <div class="search-result-card" data-card-id="${escapeHtml(card.id)}">
                     ${img ? `<img src="${img}" alt="${escapeHtml(card.name)}" loading="lazy">` : ""}
@@ -378,6 +389,7 @@
                         <div class="sr-type">${escapeHtml(truncate(card.type_line, 40))}</div>
                     </div>
                     <div class="add-btns">
+                        ${cmdBtn}
                         <button class="add-btn add-main" data-section="main" title="Add to Main">+M</button>
                         <button class="add-btn add-side" data-section="sideboard" title="Add to Sideboard">+S</button>
                         <button class="add-btn add-maybe" data-section="maybe" title="Add to Maybeboard">+?</button>
@@ -456,12 +468,31 @@
 
         bar.querySelectorAll(".basic-pip").forEach(btn => {
             btn.addEventListener("click", () => {
+                if (btn.classList.contains("disabled")) return;
                 const card = basics[btn.dataset.color];
                 if (!card || !card.id) return;
                 const qty = Math.max(1, Math.min(9999, parseInt(qtyInput.value, 10) || 1));
                 addCard(card.id, "main", qty);
             });
         });
+
+        // For commander decks: grey out basic-land pips whose color is outside
+        // the commander's color identity. Called by legality.js after each
+        // legality refresh. Non-commander decks leave all pips enabled.
+        window.updateBasicsDisabledState = function () {
+            if (!IS_COMMANDER) return;
+            const allowed = window.COMMANDER_COLOR_IDENTITY || [];
+            bar.querySelectorAll(".basic-pip").forEach(btn => {
+                const color = btn.dataset.color;
+                const ok = allowed.length > 0 && allowed.includes(color);
+                btn.classList.toggle("disabled", !ok);
+                const name = basics[color] ? basics[color].name : color;
+                btn.title = ok
+                    ? `Add ${name}`
+                    : `${name} — outside commander's color identity`;
+            });
+        };
+        window.updateBasicsDisabledState();
     }
 
     // ---------------------------------------------------------------------

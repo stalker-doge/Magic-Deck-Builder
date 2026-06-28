@@ -258,7 +258,7 @@ async def touch_deck(deck_id: int) -> None:
 # Deck entry helpers
 # ---------------------------------------------------------------------------
 
-SECTIONS = ("main", "sideboard", "maybe")
+SECTIONS = ("commander", "main", "sideboard", "maybe")
 
 
 async def add_card_to_deck(

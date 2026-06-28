@@ -10,6 +10,7 @@ import io
 from typing import Iterable
 
 SECTION_LABELS = {
+    "commander": "Commander",
     "main": "Main Deck",
     "sideboard": "Sideboard",
     "maybe": "Maybeboard",
@@ -17,7 +18,12 @@ SECTION_LABELS = {
 
 
 def _group_by_section(entries: Iterable[dict]) -> dict[str, list[dict]]:
-    grouped: dict[str, list[dict]] = {"main": [], "sideboard": [], "maybe": []}
+    grouped: dict[str, list[dict]] = {
+        "commander": [],
+        "main": [],
+        "sideboard": [],
+        "maybe": [],
+    }
     for e in entries:
         section = e.get("section", "main")
         grouped.setdefault(section, []).append(e)
@@ -34,7 +40,7 @@ def to_text(deck: dict, entries: Iterable[dict]) -> str:
     if deck.get("description"):
         lines.append(f"# {deck['description']}")
     lines.append("")
-    for section in ("main", "sideboard", "maybe"):
+    for section in ("commander", "main", "sideboard", "maybe"):
         items = grouped.get(section, [])
         if not items:
             continue
@@ -80,7 +86,7 @@ def to_csv(deck: dict, entries: Iterable[dict]) -> str:
         ]
     )
     grouped = _group_by_section(entries)
-    for section in ("main", "sideboard", "maybe"):
+    for section in ("commander", "main", "sideboard", "maybe"):
         for item in grouped.get(section, []):
             colors = item.get("colors") or []
             writer.writerow(

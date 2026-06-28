@@ -6,6 +6,9 @@
     // Initial data seed for the frontend.
     window.DECK_ID = {{ deck.id }};
     window.DECK_SEED = {{ deck_json_seed | tojson }};
+    window.DECK_FORMAT = {{ (deck.format or "casual") | tojson }};
+    window.SECTIONS = {{ display_sections | tojson }};
+    window.SECTION_LABELS = {{ section_labels | tojson }};
 </script>
 {% endblock %}
 
@@ -54,12 +57,10 @@
             <input id="basics-qty" class="basics-qty" type="number" min="1" max="60" value="1" inputmode="numeric" title="How many to add per click">
             <div id="basics-bar" class="basics-pips" aria-label="Quick-add basic lands"></div>
         </div>
-        {% for section in ["main", "sideboard", "maybe"] %}
-        <div class="deck-section" data-section="{{ section }}">
+        {% for section in display_sections %}
+        <div class="deck-section{% if section == "commander" %} deck-section-commander{% endif %}" data-section="{{ section }}">
             <div class="deck-section-header">
-                <h3 class="deck-section-title">
-                    {{ {"main": "Main Deck", "sideboard": "Sideboard", "maybe": "Maybeboard"}[section] }}
-                </h3>
+                <h3 class="deck-section-title">{{ section_labels[section] }}</h3>
                 <span class="deck-section-count" data-count-target="{{ section }}">0</span>
             </div>
             <ul class="deck-list" id="section-{{ section }}" data-section="{{ section }}"></ul>
@@ -69,6 +70,10 @@
 
     {# RIGHT: Stats + preview #}
     <aside class="panel stats-panel">
+        <div class="stats-block legality-block" id="legality-block" hidden>
+            <h2 class="panel-title">Legality</h2>
+            <div id="legality-list" class="legality-list"></div>
+        </div>
         <div class="stats-block">
             <h2 class="panel-title">Mana Curve</h2>
             <div class="chart-wrap">
@@ -92,5 +97,6 @@
 {% block scripts %}
 <script src="/static/js/preview.js"></script>
 <script src="/static/js/stats.js"></script>
+<script src="/static/js/legality.js"></script>
 <script src="/static/js/app.js"></script>
 {% endblock %}

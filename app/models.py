@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-Section = Literal["main", "sideboard", "maybe"]
+Section = Literal["commander", "main", "sideboard", "maybe"]
 
 
 class AddCardRequest(BaseModel):

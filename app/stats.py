@@ -69,7 +69,7 @@ def calculate_color_distribution(entries: Iterable[dict]) -> dict:
 
 def calculate_totals(entries: Iterable[dict]) -> dict:
     """Return total card counts per section."""
-    totals = {"main": 0, "sideboard": 0, "maybe": 0, "all": 0}
+    totals = {"commander": 0, "main": 0, "sideboard": 0, "maybe": 0, "all": 0}
     for e in entries:
         qty = int(e.get("quantity") or 0)
         section = e.get("section", "main")

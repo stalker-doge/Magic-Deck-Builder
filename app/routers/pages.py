@@ -47,16 +47,33 @@ async def deck_editor(request: Request, deck_id: int):
     if deck is None:
         raise HTTPException(status_code=404, detail="Deck not found")
     entries = await db.get_deck_entries(deck_id)
-    # Group entries by section for the template.
-    sections = {"main": [], "sideboard": [], "maybe": []}
+
+    # Commander-format decks render a dedicated Commander section above Main.
+    is_commander = (deck.get("format") or "casual") == "commander"
+    if is_commander:
+        display_sections = ["commander", "main", "sideboard", "maybe"]
+    else:
+        display_sections = ["main", "sideboard", "maybe"]
+    section_labels = {
+        "commander": "Commander",
+        "main": "Main Deck",
+        "sideboard": "Sideboard",
+        "maybe": "Maybeboard",
+    }
+
+    # Group entries by section for the template (seed every displayed section).
+    sections = {s: [] for s in display_sections}
     for e in entries:
         sections.setdefault(e["section"], []).append(e)
+
     return templates.TemplateResponse(
         request,
         "deck_editor.html",
         {
             "deck": deck,
             "sections": sections,
+            "display_sections": display_sections,
+            "section_labels": section_labels,
             "deck_json_seed": {
                 "id": deck["id"],
                 "name": deck["name"],

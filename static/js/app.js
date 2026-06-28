@@ -427,12 +427,51 @@
     }
 
     // ---------------------------------------------------------------------
+    // Basic lands — one-click toolbar
+    // ---------------------------------------------------------------------
+
+    async function initBasicLands() {
+        const bar = document.getElementById("basics-bar");
+        const qtyInput = document.getElementById("basics-qty");
+        if (!bar) return;
+
+        let basics = {};
+        try {
+            const data = await api("/api/cards/basics");
+            basics = data.basics || {};
+        } catch (err) {
+            console.error("Failed to load basics:", err);
+            return;
+        }
+
+        const order = ["W", "U", "B", "R", "G"];
+        bar.innerHTML = order
+            .filter(k => basics[k])
+            .map(k => {
+                const code = k.toLowerCase();
+                const name = basics[k].name;
+                return `<button class="basic-pip ms ms-${code}" data-color="${k}" title="Add ${escapeHtml(name)}" aria-label="Add ${escapeHtml(name)}"></button>`;
+            })
+            .join("");
+
+        bar.querySelectorAll(".basic-pip").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const card = basics[btn.dataset.color];
+                if (!card || !card.id) return;
+                const qty = Math.max(1, Math.min(9999, parseInt(qtyInput.value, 10) || 1));
+                addCard(card.id, "main", qty);
+            });
+        });
+    }
+
+    // ---------------------------------------------------------------------
     // Initialization
     // ---------------------------------------------------------------------
 
     document.addEventListener("DOMContentLoaded", async () => {
         initSearch();
         initExportDropdown();
+        initBasicLands();
         // Initial entry load.
         try {
             const data = await api(`/api/decks/${DECK_ID}/entries`);

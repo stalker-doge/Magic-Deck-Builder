@@ -49,6 +49,11 @@
 
     {# CENTER: Deck sections #}
     <section class="panel deck-panel">
+        <div class="basics-bar">
+            <span class="basics-label">Basics</span>
+            <input id="basics-qty" class="basics-qty" type="number" min="1" max="60" value="1" inputmode="numeric" title="How many to add per click">
+            <div id="basics-bar" class="basics-pips" aria-label="Quick-add basic lands"></div>
+        </div>
         {% for section in ["main", "sideboard", "maybe"] %}
         <div class="deck-section" data-section="{{ section }}">
             <div class="deck-section-header">

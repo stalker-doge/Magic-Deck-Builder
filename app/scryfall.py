@@ -247,9 +247,17 @@ class ScryfallClient:
         return card_from_raw(data)
 
     async def get_card_by_name(self, name: str) -> dict | None:
-        """Fetch a card by exact/fuzzy name. Used for text-import (future)."""
+        """Fetch a card by exact/fuzzy name. Cache-first by name.
+
+        Any cached printing with a matching name is returned without a
+        Scryfall round-trip — important for evergreen lookups like the
+        basic-land toolbar, which fires on every deck-editor load.
+        """
         if not name.strip():
             return None
+        cached = await db.get_cached_card_by_name(name)
+        if cached:
+            return cached
         data = await self._get("/cards/named", params={"fuzzy": name})
         if data is None:
             return None

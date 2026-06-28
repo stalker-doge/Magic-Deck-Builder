@@ -184,6 +184,22 @@ async def get_cached_card_by_id(card_id: str) -> dict | None:
     return None
 
 
+async def get_cached_card_by_name(name: str) -> dict | None:
+    """Return any cached card with the exact given name, regardless of age.
+
+    Used for stable, evergreen cards (e.g. basic lands) where any cached
+    printing is acceptable and a Scryfall round-trip should be avoided.
+    Case-insensitive to match Scryfall's behavior.
+    """
+    row = await fetchone(
+        "SELECT * FROM cards WHERE name = ? COLLATE NOCASE LIMIT 1",
+        (name,),
+    )
+    if row:
+        return _decode_card_row(row)
+    return None
+
+
 def _decode_card_row(row: dict) -> dict:
     """Decode JSON-encoded list fields back to Python lists."""
     row["colors"] = json.loads(row.get("colors") or "[]")

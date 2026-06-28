@@ -254,7 +254,6 @@ git clone https://github.com/stalker-doge/Magic-Deck-Builder.git
 cd Magic-Deck-Builder
 python -m venv .venv
 .venv\Scripts\activate         # Windows
-# source .venv/bin/activate    # macOS / Linux
 pip install -r requirements.txt
 python run.py
 # open http://127.0.0.1:8000

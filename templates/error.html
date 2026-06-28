@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ status_code }} — MTG Deck Builder{% endblock %}
+
+{% block content %}
+<div class="empty-state">
+    <h1>{{ status_code }}</h1>
+    <p>{{ message }}</p>
+    <a href="/" class="btn btn-primary">Back to Decks</a>
+</div>
+{% endblock %}

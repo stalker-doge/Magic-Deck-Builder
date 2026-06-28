@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MTG Deck Builder{% endblock %}</title>
+
+    {# Display + body typography — Cinzel for inscribed headings, Hanken Grotesk for body #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    {# Mana font for mana cost symbols — note: package is unscoped `mana-font`,
+       NOT `@mana-fonts/mana` (which 404s on jsDelivr). Pinned to 1.15.9 (verified). #}
+    <link href="https://cdn.jsdelivr.net/npm/mana-font@1.15.9/css/mana.min.css" rel="stylesheet">
+
+    {# SortableJS for drag-and-drop between deck sections #}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+
+    {# Chart.js for mana curve + color distribution #}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header class="topbar">
+        <a href="/" class="brand">
+            <span class="brand-icon" aria-hidden="true">
+                {# Arcane sigil: gold ring with five-pointed star + center gem,
+                   echoing the iconic MTG card-back ornament. #}
+                <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="gem" cx="50%" cy="38%" r="60%">
+                            <stop offset="0%" stop-color="#f5dc9a"/>
+                            <stop offset="55%" stop-color="#c9a961"/>
+                            <stop offset="100%" stop-color="#6a4f1a"/>
+                        </radialGradient>
+                        <linearGradient id="ring" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ecd08a"/>
+                            <stop offset="60%" stop-color="#c9a961"/>
+                            <stop offset="100%" stop-color="#8a6a2a"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="16" cy="16" r="14" stroke="url(#ring)" stroke-width="1.4" fill="rgba(201,169,97,0.04)"/>
+                    <circle cx="16" cy="16" r="11" stroke="rgba(201,169,97,0.4)" stroke-width="0.6" fill="none"/>
+                    <path d="M16 4 L19.2 13 L28.5 13 L21 18.5 L23.8 27.5 L16 22 L8.2 27.5 L11 18.5 L3.5 13 L12.8 13 Z"
+                          fill="url(#gem)" stroke="#8a6a2a" stroke-width="0.5" stroke-linejoin="round"/>
+                    <circle cx="16" cy="16" r="1.6" fill="#1a1206"/>
+                </svg>
+            </span>
+            <span>MTG Deck Builder</span>
+        </a>
+        <nav class="topbar-nav">
+            <a href="/">My Decks</a>
+            <a href="/decks/new" class="btn btn-primary btn-sm">+ New Deck</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <span>Card data &amp; images from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>.</span>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

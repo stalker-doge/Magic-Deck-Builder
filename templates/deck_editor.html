@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ deck.name }} — MTG Deck Builder{% endblock %}
+
+{% block head %}
+<script>
+    // Initial data seed for the frontend.
+    window.DECK_ID = {{ deck.id }};
+    window.DECK_SEED = {{ deck_json_seed | tojson }};
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <h1>{{ deck.name }}</h1>
+        <p class="muted">
+            <span class="badge">{{ deck.format | capitalize }}</span>
+            {% if deck.description %} &middot; {{ deck.description }}{% endif %}
+        </p>
+    </div>
+    <div class="header-actions">
+        <div class="dropdown">
+            <button class="btn btn-ghost" id="export-btn">Export ▾</button>
+            <div class="dropdown-menu" id="export-menu">
+                <a href="/decks/{{ deck.id }}/export/txt">Plain Text (.txt)</a>
+                <a href="/decks/{{ deck.id }}/export/mtgo">MTGO (.dek)</a>
+                <a href="/decks/{{ deck.id }}/export/csv">CSV (.csv)</a>
+            </div>
+        </div>
+        <form method="post" action="/decks/{{ deck.id }}/delete"
+              onsubmit="return confirm('Delete this deck? This cannot be undone.');">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+    </div>
+</section>
+
+<div class="editor-layout">
+    {# LEFT: Search panel #}
+    <aside class="panel search-panel">
+        <h2 class="panel-title">Search</h2>
+        <div class="search-box">
+            <input id="search-input" type="search" autocomplete="off"
+                   placeholder="Name or Scryfall query (e.g. 'c:r t:dragon cmc>=4')">
+            <div id="autocomplete-list" class="autocomplete-list" hidden></div>
+        </div>
+        <div id="search-info" class="search-info muted" hidden></div>
+        <div id="search-results" class="search-results"></div>
+    </aside>
+
+    {# CENTER: Deck sections #}
+    <section class="panel deck-panel">
+        {% for section in ["main", "sideboard", "maybe"] %}
+        <div class="deck-section" data-section="{{ section }}">
+            <div class="deck-section-header">
+                <h3 class="deck-section-title">
+                    {{ {"main": "Main Deck", "sideboard": "Sideboard", "maybe": "Maybeboard"}[section] }}
+                </h3>
+                <span class="deck-section-count" data-count-target="{{ section }}">0</span>
+            </div>
+            <ul class="deck-list" id="section-{{ section }}" data-section="{{ section }}"></ul>
+        </div>
+        {% endfor %}
+    </section>
+
+    {# RIGHT: Stats + preview #}
+    <aside class="panel stats-panel">
+        <div class="stats-block">
+            <h2 class="panel-title">Mana Curve</h2>
+            <div class="chart-wrap">
+                <canvas id="mana-curve-chart"></canvas>
+            </div>
+        </div>
+        <div class="stats-block">
+            <h2 class="panel-title">Colors</h2>
+            <div class="chart-wrap">
+                <canvas id="color-chart"></canvas>
+            </div>
+        </div>
+        <div class="stats-block">
+            <h2 class="panel-title">Totals</h2>
+            <div id="totals-list" class="totals-list"></div>
+        </div>
+    </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/preview.js"></script>
+<script src="/static/js/stats.js"></script>
+<script src="/static/js/app.js"></script>
+{% endblock %}

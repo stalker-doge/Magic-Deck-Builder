@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit Deck" if deck else "New Deck" }} — MTG Deck Builder{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>{{ "Edit Deck" if deck else "New Deck" }}</h1>
+</section>
+
+<form class="form" method="post" action="{{ '/decks/%d' % deck.id if deck else '/decks' }}">
+    <label class="form-field">
+        <span class="form-label">Name</span>
+        <input type="text" name="name" required maxlength="120"
+               value="{{ deck.name if deck else '' }}"
+               placeholder="e.g. Mono-Red Burn">
+    </label>
+
+    <label class="form-field">
+        <span class="form-label">Format</span>
+        <select name="format">
+            {% for fmt in ["casual", "standard", "pioneer", "modern", "legacy", "vintage", "commander", "pauper", "historic", "brawl"] %}
+            <option value="{{ fmt }}"
+                {% if deck and deck.format == fmt %}selected{% endif %}
+                {% if not deck and fmt == "casual" %}selected{% endif %}>
+                {{ fmt | capitalize }}
+            </option>
+            {% endfor %}
+        </select>
+    </label>
+
+    <label class="form-field">
+        <span class="form-label">Description <span class="muted">(optional)</span></span>
+        <textarea name="description" rows="3" maxlength="500"
+                  placeholder="Notes about strategy, sideboard plan, etc.">{{ deck.description if deck else '' }}</textarea>
+    </label>
+
+    <div class="form-actions">
+        <a href="{{ '/decks/%d' % deck.id if deck else '/' }}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">{{ "Save Changes" if deck else "Create Deck" }}</button>
+    </div>
+</form>
+{% endblock %}

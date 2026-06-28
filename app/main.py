@@ -1,0 +1,47 @@
+"""FastAPI application for the MTG Deck Builder."""
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from app.config import STATIC_DIR, TEMPLATES_DIR
+from app.database import init_db
+from app.routers import cards, decks, export, pages
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize the database on startup."""
+    await init_db()
+    yield
+
+
+app = FastAPI(title="MTG Deck Builder", lifespan=lifespan)
+
+# Mount static files at /static
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+# Jinja2 templates
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+# Register routers
+app.include_router(pages.router)
+app.include_router(cards.router, prefix="/api")
+app.include_router(decks.router, prefix="/api")
+app.include_router(export.router)
+
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: Exception):
+    """Render a friendly 404 page for HTML requests."""
+    if "text/html" in request.headers.get("accept", ""):
+        return templates.TemplateResponse(
+            request,
+            "error.html",
+            {"status_code": 404, "message": "Page not found"},
+            status_code=404,
+        )
+    return HTMLResponse(status_code=404, content="Not found")

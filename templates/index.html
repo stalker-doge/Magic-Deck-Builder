@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}My Decks — MTG Deck Builder{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <h1>My Decks</h1>
+        <p class="muted">Search Magic cards and organize them into decks.</p>
+        {# The five-color mana pie — Magic's iconic identity #}
+        <div class="mana-pie" aria-hidden="true" title="The five colors of mana">
+            <i class="ms ms-w"></i>
+            <i class="ms ms-u"></i>
+            <i class="ms ms-b"></i>
+            <i class="ms ms-r"></i>
+            <i class="ms ms-g"></i>
+        </div>
+    </div>
+    <a href="/decks/new" class="btn btn-primary">+ New Deck</a>
+</section>
+
+{% if decks %}
+<div class="deck-grid">
+    {% for deck in decks %}
+    <article class="deck-card">
+        <a href="/decks/{{ deck.id }}" class="deck-card-link">
+            <h2 class="deck-card-name">{{ deck.name }}</h2>
+            {% if deck.description %}<p class="deck-card-desc">{{ deck.description }}</p>{% endif %}
+            <div class="deck-card-meta">
+                <span class="badge">{{ deck.format }}</span>
+                <span class="deck-counts">
+                    <strong>{{ deck.main_count }}</strong> main
+                    {% if deck.sideboard_count %} &middot; <strong>{{ deck.sideboard_count }}</strong> side{% endif %}
+                    {% if deck.maybe_count %} &middot; <strong>{{ deck.maybe_count }}</strong> maybe{% endif %}
+                </span>
+            </div>
+        </a>
+        <form method="post" action="/decks/{{ deck.id }}/delete"
+              onsubmit="return confirm('Delete this deck? This cannot be undone.');">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <h2>No decks yet</h2>
+    <p>Get started by creating your first deck.</p>
+    <a href="/decks/new" class="btn btn-primary">+ Create a Deck</a>
+</div>
+{% endif %}
+{% endblock %}

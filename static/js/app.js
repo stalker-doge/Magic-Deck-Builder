@@ -134,10 +134,13 @@
             await reloadEntries();
             window.refreshStats();
             if (window.refreshLegality) window.refreshLegality();
+            if (window.refreshRecommendations) window.refreshRecommendations();
         } catch (err) {
             alert(`Failed to add card: ${err.message}`);
         }
     }
+    // Expose for recommend.js (and any other consumer).
+    window.addCardToDeck = addCard;
 
     async function changeQuantity(entryId, delta) {
         const entry = state.entries.get(entryId);
@@ -171,6 +174,7 @@
             renderSection(entry.section);
             window.refreshStats();
             if (window.refreshLegality) window.refreshLegality();
+            if (window.refreshRecommendations) window.refreshRecommendations();
         } catch (err) {
             alert(`Failed to remove card: ${err.message}`);
         }
@@ -364,6 +368,58 @@
         window.doSearch = doSearch;
     }
 
+    // Build the HTML for a single search-result-style card (image, name, mana,
+    // type, add buttons). Pure function — no DOM access. Exposed on window so
+    // recommend.js can render its categories using the same markup.
+    window.renderCardHtml = function (card) {
+        const img = card.image_small || "";
+        const manaHtml = window.renderMana(card.mana_cost || "");
+        const cmdBtn = IS_COMMANDER
+            ? `<button class="add-btn add-cmd" data-section="commander" title="Set as Commander">+C</button>`
+            : "";
+        return `
+            <div class="search-result-card" data-card-id="${escapeHtml(card.id)}">
+                ${img ? `<img src="${img}" alt="${escapeHtml(card.name)}" loading="lazy">` : ""}
+                <div class="sr-info">
+                    <div class="sr-name">${escapeHtml(card.name)} ${manaHtml}</div>
+                    <div class="sr-type">${escapeHtml(truncate(card.type_line, 40))}</div>
+                </div>
+                <div class="add-btns">
+                    ${cmdBtn}
+                    <button class="add-btn add-main" data-section="main" title="Add to Main">+M</button>
+                    <button class="add-btn add-side" data-section="sideboard" title="Add to Sideboard">+S</button>
+                    <button class="add-btn add-maybe" data-section="maybe" title="Add to Maybeboard">+?</button>
+                </div>
+            </div>
+        `;
+    };
+
+    // Wire hover-preview, click-preview, and add-button handlers on every
+    // `.search-result-card` element within `rootEl`. `cards` is the source
+    // array so handlers can look up the card by id. Exposed for recommend.js.
+    window.attachCardHandlers = function (rootEl, cards) {
+        const byId = new Map(cards.map(c => [c.id, c]));
+        rootEl.querySelectorAll(".search-result-card").forEach(el => {
+            const cardId = el.dataset.cardId;
+            el.addEventListener("mouseenter", () => {
+                const card = byId.get(cardId);
+                if (card) window.schedulePreview(card, el);
+            });
+            el.addEventListener("mouseleave", () => window.cancelPreview());
+            el.addEventListener("click", (e) => {
+                if (e.target.closest("button")) return;
+                const card = byId.get(cardId);
+                if (card) window.renderPreview(card, el);
+            });
+            el.querySelectorAll(".add-btn").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    addCard(cardId, btn.dataset.section, 1);
+                });
+            });
+        });
+    };
+
     function renderSearchResults(cards, total, query) {
         const results = document.getElementById("search-results");
         const info = document.getElementById("search-info");
@@ -374,51 +430,8 @@
         }
         info.hidden = false;
         info.textContent = `${total} card${total === 1 ? "" : "s"} matched "${query}" (showing ${cards.length}).`;
-
-        results.innerHTML = cards.map(card => {
-            const img = card.image_small || "";
-            const manaHtml = window.renderMana(card.mana_cost || "");
-            const cmdBtn = IS_COMMANDER
-                ? `<button class="add-btn add-cmd" data-section="commander" title="Set as Commander">+C</button>`
-                : "";
-            return `
-                <div class="search-result-card" data-card-id="${escapeHtml(card.id)}">
-                    ${img ? `<img src="${img}" alt="${escapeHtml(card.name)}" loading="lazy">` : ""}
-                    <div class="sr-info">
-                        <div class="sr-name">${escapeHtml(card.name)} ${manaHtml}</div>
-                        <div class="sr-type">${escapeHtml(truncate(card.type_line, 40))}</div>
-                    </div>
-                    <div class="add-btns">
-                        ${cmdBtn}
-                        <button class="add-btn add-main" data-section="main" title="Add to Main">+M</button>
-                        <button class="add-btn add-side" data-section="sideboard" title="Add to Sideboard">+S</button>
-                        <button class="add-btn add-maybe" data-section="maybe" title="Add to Maybeboard">+?</button>
-                    </div>
-                </div>
-            `;
-        }).join("");
-
-        results.querySelectorAll(".search-result-card").forEach(el => {
-            const cardId = el.dataset.cardId;
-            // Preview on hover.
-            el.addEventListener("mouseenter", () => {
-                const card = cards.find(c => c.id === cardId);
-                if (card) window.schedulePreview(card, el);
-            });
-            el.addEventListener("mouseleave", () => window.cancelPreview());
-            el.addEventListener("click", (e) => {
-                if (e.target.closest("button")) return;
-                const card = cards.find(c => c.id === cardId);
-                if (card) window.renderPreview(card, el);
-            });
-            // Add buttons.
-            el.querySelectorAll(".add-btn").forEach(btn => {
-                btn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    addCard(cardId, btn.dataset.section, 1);
-                });
-            });
-        });
+        results.innerHTML = cards.map(window.renderCardHtml).join("");
+        window.attachCardHandlers(results, cards);
     }
 
     // ---------------------------------------------------------------------

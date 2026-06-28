@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from app import database as db
 from app.commander import deck_legality_report
 from app.models import AddCardRequest, MoveEntryRequest, UpdateEntryRequest
+from app.recommend import build_recommendations
 from app.stats import deck_summary
 
 router = APIRouter(tags=["decks"])
@@ -98,3 +99,19 @@ async def get_legality(deck_id: int):
         raise HTTPException(status_code=404, detail="Deck not found")
     entries = await db.get_deck_entries(deck_id)
     return deck_legality_report(deck, entries)
+
+
+@router.get("/decks/{deck_id}/recommendations")
+async def get_recommendations(deck_id: int):
+    """Return deck-aware card recommendations.
+
+    Hybrid: commander staples (commander format only) + theme-matched cards
+    detected from anchor-card oracle text. Cached in-memory keyed by the
+    deck's card-id set, so adding/removing a card invalidates but qty/move
+    changes are cache hits.
+    """
+    deck = await db.get_deck(deck_id)
+    if deck is None:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    entries = await db.get_deck_entries(deck_id)
+    return await build_recommendations(deck, entries)

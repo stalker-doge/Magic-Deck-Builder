@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.config import STATIC_DIR, TEMPLATES_DIR
+from app.config import DB_PATH, STATIC_DIR, TEMPLATES_DIR, TURSO_DATABASE_URL
 from app.database import init_db
 from app.routers import cards, decks, export, pages
 
@@ -17,6 +17,22 @@ from app.routers import cards, decks, export, pages
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize the database on startup."""
+    # Banner: make the DB mode obvious in Vercel function logs so a missing
+    # Turso env var doesn't suffer in silence (decks would vanish because each
+    # warm instance would get its own ephemeral /tmp/magic.db).
+    if TURSO_DATABASE_URL:
+        # Only print the scheme+host so we don't leak the auth token if the
+        # URL ever had one embedded (it shouldn't — token is separate).
+        safe = TURSO_DATABASE_URL.split("@")[-1] if "@" in TURSO_DATABASE_URL else TURSO_DATABASE_URL
+        print(f"[startup] DB mode: Turso (remote libSQL) -> {safe}", flush=True)
+    else:
+        print(
+            f"[startup] DB mode: LOCAL FILE ({DB_PATH}) — "
+            "TURSO_DATABASE_URL is NOT SET; on Vercel this means each function "
+            "instance has its own ephemeral DB and decks will not persist. "
+            "Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in Project Settings.",
+            flush=True,
+        )
     try:
         await init_db()
     except Exception as e:

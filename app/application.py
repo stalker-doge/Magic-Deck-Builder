@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.config import DB_PATH, STATIC_DIR, TEMPLATES_DIR, TURSO_DATABASE_URL
+from app.config import DB_PATH, STATIC_DIR, TEMPLATES_DIR, TURSO_AUTH_TOKEN, TURSO_DATABASE_URL
 from app.database import init_db
 from app.routers import cards, decks, export, pages
 
@@ -33,6 +33,21 @@ async def lifespan(app: FastAPI):
             "Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in Project Settings.",
             flush=True,
         )
+    # Token-shape diagnostic: prints ONLY length + dot count + first 7 chars
+    # of the JWT header (the header is the same base64-encoded
+    # {"alg":"EdDSA","typ":"JWT"} for every Turso DB token — NOT secret).
+    # This detects truncation, whitespace contamination, and env-var-not-set
+    # without leaking the signature.
+    if TURSO_AUTH_TOKEN:
+        n = len(TURSO_AUTH_TOKEN)
+        dots = TURSO_AUTH_TOKEN.count(".")
+        head = TURSO_AUTH_TOKEN[:7]
+        print(
+            f"[startup] TURSO_AUTH_TOKEN present: len={n} dots={dots} head={head!r}",
+            flush=True,
+        )
+    else:
+        print("[startup] TURSO_AUTH_TOKEN is NOT SET", flush=True)
     try:
         await init_db()
     except Exception as e:

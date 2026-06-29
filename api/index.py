@@ -5,4 +5,16 @@ file under ``api/``. Importing it here is enough — no handler code needed.
 The FastAPI lifespan (which runs ``init_db``) fires on cold start of the
 function instance.
 """
-from app.main import app  # noqa: F401  (Vercel auto-detects the `app` ASGI object)
+import os
+import sys
+
+# Vercel's serverless runtime does not always put the project root on
+# sys.path (it tends to add only the entrypoint file's directory). Without
+# this, ``from app.main import app`` raises ModuleNotFoundError because the
+# ``app`` package (sibling of ``api/``) is not importable. Insert the project
+# root explicitly so the package resolves.
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from app.main import app  # noqa: E402,F401  (Vercel auto-detects the `app` ASGI object)

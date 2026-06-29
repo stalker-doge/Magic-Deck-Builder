@@ -1,5 +1,6 @@
 """FastAPI application for the MTG Deck Builder."""
 import os
+import traceback
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -16,7 +17,16 @@ from app.routers import cards, decks, export, pages
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize the database on startup."""
-    await init_db()
+    try:
+        await init_db()
+    except Exception as e:
+        # Vercel's platform collapses lifespan exceptions into a generic
+        # "Application startup failed" message on the 500 page. Print the
+        # real traceback so it surfaces in the Vercel function logs for
+        # diagnosis, then re-raise so the function still fails loudly.
+        print(f"[startup] init_db failed: {e!r}", flush=True)
+        traceback.print_exc()
+        raise
     yield
 
 

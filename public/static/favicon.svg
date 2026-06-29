@@ -1,0 +1,25 @@
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <radialGradient id="gem" cx="50%" cy="38%" r="60%">
+            <stop offset="0%" stop-color="#f5dc9a"/>
+            <stop offset="55%" stop-color="#c9a961"/>
+            <stop offset="100%" stop-color="#6a4f1a"/>
+        </radialGradient>
+        <linearGradient id="ring" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ecd08a"/>
+            <stop offset="60%" stop-color="#c9a961"/>
+            <stop offset="100%" stop-color="#8a6a2a"/>
+        </linearGradient>
+    </defs>
+    {# Dark rounded background so the gold reads in light-mode browser tabs. #}
+    <rect width="32" height="32" rx="6" fill="#1a1206"/>
+    {# Outer gold ring — bolder stroke than the in-page brand icon so it
+       survives downscaling to 16x16 in browser tabs. #}
+    <circle cx="16" cy="16" r="13" stroke="url(#ring)" stroke-width="2" fill="rgba(201,169,97,0.04)"/>
+    <circle cx="16" cy="16" r="10.5" stroke="rgba(201,169,97,0.4)" stroke-width="0.8" fill="none"/>
+    {# Five-pointed star with the center-gem radial gradient. Same path as
+       the header brand icon — keeps tab + header visually identical. #}
+    <path d="M16 4 L19.2 13 L28.5 13 L21 18.5 L23.8 27.5 L16 22 L8.2 27.5 L11 18.5 L3.5 13 L12.8 13 Z"
+          fill="url(#gem)" stroke="#8a6a2a" stroke-width="0.8" stroke-linejoin="round"/>
+    <circle cx="16" cy="16" r="1.8" fill="#1a1206"/>
+</svg>

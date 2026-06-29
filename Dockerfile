@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # from the build context even if COPY globs widen later.
 COPY app/ ./app/
 COPY templates/ ./templates/
-COPY static/ ./static/
+COPY public/ ./public/
 
 # Run uvicorn as a non-root user. Container root is avoided per best practice.
 RUN useradd --create-home --uid 1000 appuser \

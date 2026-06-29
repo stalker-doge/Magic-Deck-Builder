@@ -32,10 +32,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="MTG Deck Builder", lifespan=lifespan)
 
-# Serve /static from the filesystem in local/Docker dev. On Vercel, the
-# VERCEL env var is set and vercel.json routes /static/* to the CDN directly,
-# so we skip the mount here to avoid double-handling and function invocations
-# for asset requests.
+# Serve /static from the filesystem in local/Docker dev. On Vercel, the VERCEL
+# env var is set and vercel.json rewrites fall through to the CDN-served
+# public/static/ directory, so we skip the mount here to avoid double-handling
+# and function invocations for asset requests.
 if not os.environ.get("VERCEL"):
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 

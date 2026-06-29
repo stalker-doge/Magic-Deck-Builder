@@ -20,9 +20,12 @@ DB_PATH = Path(os.environ.get("DB_PATH", _default_db_path))
 TURSO_DATABASE_URL = os.environ.get("TURSO_DATABASE_URL")
 TURSO_AUTH_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
 
-# Templates and static asset directories
+# Templates and static asset directories.
+# Static assets live under public/static/ so that Vercel serves them at /static/*
+# from the CDN (Vercel only auto-serves files under public/). The /static/* URL
+# prefix is unchanged for both local dev (StaticFiles mount) and Vercel.
 TEMPLATES_DIR = BASE_DIR / "templates"
-STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR = BASE_DIR / "public" / "static"
 
 # Scryfall API
 SCRYFALL_BASE_URL = "https://api.scryfall.com"

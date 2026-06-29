@@ -42,7 +42,7 @@ EXPOSE 8000
 #                           on the compose bridge network (safe here: only
 #                           Caddy can reach port 8000 — it is not published).
 #   (no --reload)           reload is a dev feature; omitted in prod.
-CMD ["uvicorn", "app.main:app", \
+CMD ["uvicorn", "app.application:app", \
      "--host", "0.0.0.0", \
      "--port", "8000", \
      "--workers", "1", \

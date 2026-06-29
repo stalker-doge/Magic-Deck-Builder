@@ -1,8 +1,0 @@
-# Tell Vercel's Python runtime exactly where the ASGI app lives.
-# Without this, Vercel auto-detects BOTH `app/main.py` (main.py inside the
-# app/ directory is a supported entrypoint pattern) AND `api/index.py`, which
-# can cause it to load app/main.py directly without the project root on
-# sys.path — breaking `from app.config import ...` style package imports.
-# Pinning the entrypoint removes the ambiguity.
-[tool.vercel]
-entrypoint = "api.index:app"

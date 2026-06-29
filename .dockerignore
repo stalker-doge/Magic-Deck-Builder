@@ -1,0 +1,55 @@
+# Local dev database — must NEVER be baked into the image.
+# The container starts with an empty DB (created by lifespan init_db)
+# and persists it via the magic-db named volume at /data/magic.db.
+magic.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Python caches / build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+build/
+dist/
+
+# Local virtualenvs — deps come from requirements.txt inside the image.
+.venv/
+venv/
+env/
+ENV/
+
+# Secrets — must never be in the image.
+.env
+.env.*
+!.env.example
+
+# Editor / OS cruft
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Git + agent state
+.git/
+.gitignore
+.gitattributes
+.claude/
+
+# Local planning docs
+findings.md
+progress.md
+task_plan.md
+
+# README is for humans, not the runtime image
+README.md
+
+# Docker meta files — not needed inside the image
+Dockerfile
+docker-compose.yml
+.dockerignore
+Caddyfile

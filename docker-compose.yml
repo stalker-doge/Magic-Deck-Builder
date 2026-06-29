@@ -1,0 +1,59 @@
+# Single-user FastAPI MTG Deck Builder deployment.
+#   app:   the FastAPI/Uvicorn container (internal only, not published)
+#   caddy: reverse proxy with automatic HTTPS (publishes 80 + 443)
+#
+# Usage:
+#   1. cp .env.example .env  &&  edit DOMAIN/ACME_EMAIL
+#   2. docker compose up -d --build
+#   3. First run: Caddy obtains a Let's Encrypt cert (may take ~30s).
+
+services:
+  app:
+    build: .
+    image: magic-deck-builder:latest
+    container_name: magic-app
+    restart: unless-stopped
+    expose:
+      - "8000"          # reachable inside the compose network only
+    volumes:
+      # Named volume for the SQLite database ONLY.
+      # config.py picks up DB_PATH from the env below → /data/magic.db.
+      # This keeps app code (rebuilt from image) and data (persists in volume)
+      # cleanly separated so `docker compose up -d --build` never shadows code.
+      - magic-db:/data
+    environment:
+      - DB_PATH=/data/magic.db
+    healthcheck:
+      # FastAPI root route (/) returns 200 on a healthy app. The lifespan
+      # init_db runs before the server accepts connections, so once uvicorn
+      # is answering, the DB schema is ready.
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/').status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: magic-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"     # HTTP  → Caddy redirects to HTTPS
+      - "443:443"   # HTTPS → reverse proxy to app:8000
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data        # certs, ACME account key (persisted)
+      - caddy_config:/config    # runtime config state
+    environment:
+      # {$DOMAIN} / {$ACME_EMAIL} in the Caddyfile resolve from these.
+      # :? makes compose fail loudly with a clear error if .env is missing.
+      - DOMAIN=${DOMAIN:?DOMAIN must be set in .env}
+      - ACME_EMAIL=${ACME_EMAIL:?ACME_EMAIL must be set in .env}
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  magic-db:
+  caddy_data:
+  caddy_config:

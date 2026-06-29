@@ -1,0 +1,29 @@
+{
+	# Global options block.
+	# ACME account email — used by Let's Encrypt for cert expiry notices.
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	# gzip + zstd compression for text responses (HTML, CSS, JS, JSON).
+	encode gzip zstd
+
+	# Reverse proxy to the FastAPI app on the compose network.
+	reverse_proxy app:8000 {
+		# Forward the real client IP / host / scheme to uvicorn so its
+		# --proxy-headers flag sees accurate values.
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	# No special WebSocket/SSE config needed: the app is pure HTTP.
+	# Caddy passes Upgrade/Connection headers through automatically anyway.
+}
+
+# Caddy automatically (no extra directives needed):
+#   - Listens on :80 and issues a 301 to https:// for HTTP requests
+#   - Provisions a Let's Encrypt cert on first HTTPS request
+#   - Renews the cert ~30 days before expiry
+#   - Enables HTTP/2 and HTTP/3 (QUIC on UDP/443)

@@ -1,18 +1,22 @@
 """SQLite database connection, schema, and query helpers.
 
-All functions are async and use aiosqlite. The database file is created at
-``config.DB_PATH`` on first use. A module-level connection is opened lazily
-and reused for the lifetime of the process.
+All public functions are async and delegate to the official ``libsql`` client
+(local file or remote Turso URL — see ``config.TURSO_DATABASE_URL``). Sync libsql calls
+run on a worker thread via ``asyncio.to_thread`` so the event loop is never
+blocked. A module-level connection is opened lazily and reused for the
+lifetime of the process.
 """
 from __future__ import annotations
 
+import asyncio
 import json
+import sqlite3
 import time
 from typing import Any, Iterable
 
-import aiosqlite
+import libsql
 
-from app.config import DB_PATH
+from app.config import DB_PATH, TURSO_AUTH_TOKEN, TURSO_DATABASE_URL
 
 # SQL for schema creation. Executed on app startup.
 SCHEMA = """
@@ -68,32 +72,55 @@ CREATE INDEX IF NOT EXISTS idx_cards_name ON cards(name);
 # Connection management
 # ---------------------------------------------------------------------------
 
-_db: aiosqlite.Connection | None = None
+# libsql exposes a sqlite3-compatible *synchronous* connection (works for both
+# a local file and a remote Turso URL). All public functions in this module
+# remain async for API stability with the rest of the app; sync libsql calls
+# are dispatched to a worker thread via asyncio.to_thread so the event loop is
+# never blocked. A module-level connection is opened lazily and reused for the
+# lifetime of the process (Vercel reuses warm function instances, so this pays
+# off across requests; cold starts simply re-open).
+_db: Any = None
 
 
-async def get_db() -> aiosqlite.Connection:
+async def get_db() -> Any:
     """Return the singleton database connection, opening it if needed."""
     global _db
     if _db is None:
-        _db = await aiosqlite.connect(str(DB_PATH))
-        _db.row_factory = aiosqlite.Row
-        await _db.execute("PRAGMA foreign_keys = ON")
-        await _db.commit()
+        def _open() -> Any:
+            if TURSO_DATABASE_URL:
+                conn = libsql.connect(TURSO_DATABASE_URL, auth_token=TURSO_AUTH_TOKEN)
+            else:
+                conn = libsql.connect(str(DB_PATH))
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA foreign_keys = ON")
+            conn.commit()
+            return conn
+        _db = await asyncio.to_thread(_open)
     return _db
 
 
 async def init_db() -> None:
     """Create tables and indexes if they don't exist."""
     db = await get_db()
-    await db.executescript(SCHEMA)
-    await db.commit()
+
+    # libsql does not expose executescript(); split the schema on ';' and run
+    # each non-empty statement individually. Safe for this schema (no triggers
+    # or views with embedded semicolons).
+    def _run() -> None:
+        for stmt in SCHEMA.split(";"):
+            stmt = stmt.strip()
+            if stmt:
+                db.execute(stmt)
+        db.commit()
+
+    await asyncio.to_thread(_run)
 
 
 async def close_db() -> None:
     """Close the database connection (used in tests / shutdown)."""
     global _db
     if _db is not None:
-        await _db.close()
+        await asyncio.to_thread(_db.close)
         _db = None
 
 
@@ -108,32 +135,32 @@ async def execute(sql: str, params: Any = ()) -> Any:
     Accepts a sequence (for ? placeholders) or a dict (for :name placeholders).
     """
     db = await get_db()
-    cur = await db.execute(sql, params)
-    await db.commit()
+    cur = await asyncio.to_thread(db.execute, sql, params)
+    await asyncio.to_thread(db.commit)
     return cur
 
 
 async def executemany(sql: str, params: Iterable[Iterable[Any]]) -> Any:
     """Execute many and commit."""
     db = await get_db()
-    cur = await db.executemany(sql, [tuple(p) for p in params])
-    await db.commit()
+    cur = await asyncio.to_thread(db.executemany, sql, [tuple(p) for p in params])
+    await asyncio.to_thread(db.commit)
     return cur
 
 
 async def fetchone(sql: str, params: Any = ()) -> dict | None:
     """Fetch a single row as a dict (or None)."""
     db = await get_db()
-    cur = await db.execute(sql, params)
-    row = await cur.fetchone()
+    cur = await asyncio.to_thread(db.execute, sql, params)
+    row = await asyncio.to_thread(cur.fetchone)
     return dict(row) if row else None
 
 
 async def fetchall(sql: str, params: Any = ()) -> list[dict]:
     """Fetch all rows as a list of dicts."""
     db = await get_db()
-    cur = await db.execute(sql, params)
-    rows = await cur.fetchall()
+    cur = await asyncio.to_thread(db.execute, sql, params)
+    rows = await asyncio.to_thread(cur.fetchall)
     return [dict(r) for r in rows]
 
 
@@ -355,30 +382,36 @@ async def move_entry(
         raise ValueError(f"invalid section: {to_section}")
 
     db = await get_db()
-    try:
-        await db.execute(
-            "UPDATE deck_card_entries SET section = ? WHERE id = ? AND deck_id = ?",
-            (to_section, entry_id, deck_id),
-        )
-        if new_order_from is not None:
-            for idx, eid in enumerate(new_order_from):
-                await db.execute(
-                    "UPDATE deck_card_entries SET sort_order = ? WHERE id = ? AND deck_id = ?",
-                    (idx, eid, deck_id),
-                )
-        if new_order_to is not None:
-            for idx, eid in enumerate(new_order_to):
-                await db.execute(
-                    "UPDATE deck_card_entries SET sort_order = ? WHERE id = ? AND deck_id = ?",
-                    (idx, eid, deck_id),
-                )
-        await db.execute(
-            "UPDATE decks SET updated_at = datetime('now') WHERE id = ?", (deck_id,)
-        )
-        await db.commit()
-    except Exception:
-        await db.rollback()
-        raise
+
+    # The whole transaction runs on a single worker thread so the libsql
+    # connection's sync commit/rollback semantics stay atomic.
+    def _tx() -> None:
+        try:
+            db.execute(
+                "UPDATE deck_card_entries SET section = ? WHERE id = ? AND deck_id = ?",
+                (to_section, entry_id, deck_id),
+            )
+            if new_order_from is not None:
+                for idx, eid in enumerate(new_order_from):
+                    db.execute(
+                        "UPDATE deck_card_entries SET sort_order = ? WHERE id = ? AND deck_id = ?",
+                        (idx, eid, deck_id),
+                    )
+            if new_order_to is not None:
+                for idx, eid in enumerate(new_order_to):
+                    db.execute(
+                        "UPDATE deck_card_entries SET sort_order = ? WHERE id = ? AND deck_id = ?",
+                        (idx, eid, deck_id),
+                    )
+            db.execute(
+                "UPDATE decks SET updated_at = datetime('now') WHERE id = ?", (deck_id,)
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+
+    await asyncio.to_thread(_tx)
 
 
 async def get_deck_entries(deck_id: int) -> list[dict]:

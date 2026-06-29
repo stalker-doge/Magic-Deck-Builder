@@ -1,4 +1,5 @@
 """FastAPI application for the MTG Deck Builder."""
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -21,8 +22,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="MTG Deck Builder", lifespan=lifespan)
 
-# Mount static files at /static
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+# Serve /static from the filesystem in local/Docker dev. On Vercel, the
+# VERCEL env var is set and vercel.json routes /static/* to the CDN directly,
+# so we skip the mount here to avoid double-handling and function invocations
+# for asset requests.
+if not os.environ.get("VERCEL"):
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # Jinja2 templates
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))

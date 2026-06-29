@@ -1,11 +1,24 @@
 """Application configuration."""
+import os
 from pathlib import Path
 
 # Project root (parent of the app/ directory)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SQLite database file
-DB_PATH = BASE_DIR / "magic.db"
+# SQLite database file. Overridable via env var so the Docker container can
+# point at a named-volume path (e.g. /data/magic.db) without code changes.
+# When TURSO_DATABASE_URL is unset on Vercel (rare — production always sets Turso),
+# the filesystem is read-only outside /tmp, so default there rather than
+# under BASE_DIR (which would be inside the function bundle and unwritable).
+_default_db_path = "/tmp/magic.db" if os.environ.get("VERCEL") else str(BASE_DIR / "magic.db")
+DB_PATH = Path(os.environ.get("DB_PATH", _default_db_path))
+
+# Turso (libSQL-over-HTTP) connection for serverless deployment.
+# When both are set, database.py connects remotely and DB_PATH is ignored.
+# URL must be the libsql:// form (not the https:// dashboard URL).
+# Env var name matches Turso's documented convention.
+TURSO_DATABASE_URL = os.environ.get("TURSO_DATABASE_URL")
+TURSO_AUTH_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
 
 # Templates and static asset directories
 TEMPLATES_DIR = BASE_DIR / "templates"

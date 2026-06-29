@@ -130,13 +130,18 @@ class ScryfallClient:
             if elapsed < SCRYFALL_MIN_DELAY:
                 await asyncio.sleep(SCRYFALL_MIN_DELAY - elapsed)
 
-            client = await self.get_client()
             last_exc: Exception | None = None
             for attempt in range(3):
+                # Re-resolve the client each iteration so a stale connection
+                # pool (e.g. after Vercel freezes and thaws a warm function
+                # instance) is dropped and replaced on retry.
+                client = await self.get_client()
                 try:
                     resp = await client.get(path, params=params)
                 except httpx.HTTPError as exc:
                     last_exc = exc
+                    # Drop the possibly-stale client so get_client() rebuilds it.
+                    self._client = None
                     await asyncio.sleep(0.5 * (attempt + 1))
                     continue
 

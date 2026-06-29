@@ -210,6 +210,10 @@ async def fetchall(sql: str, params: Any = ()) -> list[dict]:
 
 async def upsert_card(card: dict) -> None:
     """Insert or replace a card in the cache."""
+    # libsql's native execute() only accepts sequence params (lists/tuples),
+    # NOT dicts — passing a dict raises "Expected a list or tuple for
+    # parameters". So we use ? placeholders with an explicit tuple in
+    # column order instead of :name placeholders with the card dict.
     await execute(
         """
         INSERT OR REPLACE INTO cards (
@@ -218,13 +222,33 @@ async def upsert_card(card: dict) -> None:
             set_name, set_code, rarity, power, toughness, layout,
             card_faces_json, scryfall_uri, cached_at
         ) VALUES (
-            :id, :name, :mana_cost, :cmc, :type_line, :oracle_text, :colors,
-            :color_identity, :image_small, :image_normal, :image_png,
-            :set_name, :set_code, :rarity, :power, :toughness, :layout,
-            :card_faces_json, :scryfall_uri, datetime('now')
+            ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, datetime('now')
         )
         """,
-        card,
+        (
+            card["id"],
+            card["name"],
+            card["mana_cost"],
+            card["cmc"],
+            card["type_line"],
+            card["oracle_text"],
+            card["colors"],
+            card["color_identity"],
+            card["image_small"],
+            card["image_normal"],
+            card["image_png"],
+            card["set_name"],
+            card["set_code"],
+            card["rarity"],
+            card["power"],
+            card["toughness"],
+            card["layout"],
+            card["card_faces_json"],
+            card["scryfall_uri"],
+        ),
     )
 
 

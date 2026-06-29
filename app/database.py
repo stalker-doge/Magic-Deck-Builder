@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import sqlite3
 import time
 from typing import Any, Iterable
 
@@ -91,7 +90,9 @@ async def get_db() -> Any:
                 conn = libsql.connect(TURSO_DATABASE_URL, auth_token=TURSO_AUTH_TOKEN)
             else:
                 conn = libsql.connect(str(DB_PATH))
-            conn.row_factory = sqlite3.Row
+            # NOTE: libsql's native Connection (unlike Python's sqlite3 module)
+            # does NOT expose `row_factory`. Rows are converted to dicts at the
+            # fetchone/fetchall layer using cursor.description instead.
             conn.execute("PRAGMA foreign_keys = ON")
             conn.commit()
             return conn
@@ -129,39 +130,77 @@ async def close_db() -> None:
 # ---------------------------------------------------------------------------
 
 
+def _row_to_dict(cursor: Any, row: Any) -> dict | None:
+    """Convert a fetched row into a dict.
+
+    libsql's Connection does not support ``row_factory`` (unlike sqlite3),
+    so rows come back as plain tuples. We read column names from the cursor's
+    ``description`` (DB-API 2.0) and zip them with the values. If a row is
+    already dict-like (has ``.keys()``), fall back to ``dict(row)``.
+    """
+    if row is None:
+        return None
+    if hasattr(row, "keys"):
+        return dict(row)
+    description = getattr(cursor, "description", None) or []
+    cols = [d[0] for d in description]
+    if cols:
+        return dict(zip(cols, row))
+    # No column metadata — last-resort coercion (will work if row is a 2-tuples
+    # sequence, raise a clear TypeError otherwise).
+    return dict(row)
+
+
 async def execute(sql: str, params: Any = ()) -> Any:
     """Execute a single SQL statement and commit.
 
     Accepts a sequence (for ? placeholders) or a dict (for :name placeholders).
+    Returns the cursor (callers read ``lastrowid`` off it).
     """
     db = await get_db()
-    cur = await asyncio.to_thread(db.execute, sql, params)
-    await asyncio.to_thread(db.commit)
-    return cur
+
+    def _run() -> Any:
+        cur = db.execute(sql, params)
+        db.commit()
+        return cur
+
+    return await asyncio.to_thread(_run)
 
 
 async def executemany(sql: str, params: Iterable[Iterable[Any]]) -> Any:
     """Execute many and commit."""
     db = await get_db()
-    cur = await asyncio.to_thread(db.executemany, sql, [tuple(p) for p in params])
-    await asyncio.to_thread(db.commit)
-    return cur
+
+    def _run() -> Any:
+        cur = db.executemany(sql, [tuple(p) for p in params])
+        db.commit()
+        return cur
+
+    return await asyncio.to_thread(_run)
 
 
 async def fetchone(sql: str, params: Any = ()) -> dict | None:
     """Fetch a single row as a dict (or None)."""
     db = await get_db()
-    cur = await asyncio.to_thread(db.execute, sql, params)
-    row = await asyncio.to_thread(cur.fetchone)
-    return dict(row) if row else None
+
+    def _run() -> dict | None:
+        cur = db.execute(sql, params)
+        row = cur.fetchone()
+        return _row_to_dict(cur, row)
+
+    return await asyncio.to_thread(_run)
 
 
 async def fetchall(sql: str, params: Any = ()) -> list[dict]:
     """Fetch all rows as a list of dicts."""
     db = await get_db()
-    cur = await asyncio.to_thread(db.execute, sql, params)
-    rows = await asyncio.to_thread(cur.fetchall)
-    return [dict(r) for r in rows]
+
+    def _run() -> list[dict]:
+        cur = db.execute(sql, params)
+        rows = cur.fetchall()
+        return [_row_to_dict(cur, r) for r in rows]
+
+    return await asyncio.to_thread(_run)
 
 
 # ---------------------------------------------------------------------------

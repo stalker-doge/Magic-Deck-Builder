@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 820" font-family="Helvetica Neue, Arial, sans-serif">
+  <title>MTG Deck Builder — Database Schema</title>
+  <desc>Entity-relationship diagram of the SQLite database: decks, cards (Scryfall cache), and deck_card_entries (many-to-many junction).</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="2"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.16"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="card-one" viewBox="-4 -7 10 14" refX="0" refY="0" markerWidth="10" markerHeight="14" orient="auto" markerUnits="userSpaceOnUse">
+      <line x1="0" y1="-6" x2="0" y2="6" stroke="#525252" stroke-width="2"/>
+    </marker>
+    <marker id="card-many" viewBox="-14 -7 16 14" refX="0" refY="0" markerWidth="16" markerHeight="14" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M-13,0 L0,-6 M-13,0 L0,0 M-13,0 L0,6" stroke="#525252" stroke-width="1.6" fill="none"/>
+    </marker>
+  </defs>
+  <rect width="1600" height="820" fill="#FAFAFA"/>
+  <text x="80" y="50" font-size="28" font-weight="700" fill="#1A1206">MTG Deck Builder — Database Schema</text>
+  <text x="80" y="76" font-size="14" fill="#6B6B6B">SQLite  ·  3 tables  ·  decks ↔ cards via deck_card_entries (many-to-many)</text>
+  <line x1="80" y1="96" x2="1520" y2="96" stroke="#E5E5E5" stroke-width="1"/>
+  <g id="table-decks">
+    <rect x="120" y="310" width="340" height="180" rx="10" fill="#FFFFFF" stroke="#B45309" stroke-width="1.5" filter="url(#shadow)"/>
+    <path d="M120,320 a10,10 0 0 1 10,-10 h320 a10,10 0 0 1 10,10 v26 h-340 z" fill="#B45309"/>
+    <text x="290" y="329" text-anchor="middle" dominant-baseline="central" font-size="17" font-weight="700" fill="#FFFFFF">decks</text>
+    <text x="290" y="343" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#FFFFFF" opacity="0.85">one row per saved deck</text>
+    <line x1="132" y1="370" x2="448" y2="370" stroke="#F3F4F6" stroke-width="1"/>
+    <rect x="132" y="350" width="28" height="16" rx="3" fill="#D97706"/>
+    <text x="146" y="358" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="#FFFFFF">PK</text>
+    <text x="170" y="358" dominant-baseline="central" font-size="13" font-weight="700" fill="#111827">id</text>
+    <text x="446" y="358" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">INTEGER</text>
+    <rect x="121" y="370" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="132" y1="394" x2="448" y2="394" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="170" y="382" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">name</text>
+    <text x="446" y="382" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <line x1="132" y1="418" x2="448" y2="418" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="170" y="406" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">description</text>
+    <text x="446" y="406" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="121" y="418" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="132" y1="442" x2="448" y2="442" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="170" y="430" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">format</text>
+    <text x="446" y="430" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <line x1="132" y1="466" x2="448" y2="466" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="170" y="454" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">created_at</text>
+    <text x="446" y="454" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="121" y="466" width="338" height="24" fill="#F9FAFB"/>
+    <text x="170" y="478" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">updated_at</text>
+    <text x="446" y="478" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+  </g>
+  <g id="table-deck_card_entries">
+    <rect x="630" y="296" width="340" height="208" rx="10" fill="#FFFFFF" stroke="#047857" stroke-width="1.5" filter="url(#shadow)"/>
+    <path d="M630,306 a10,10 0 0 1 10,-10 h320 a10,10 0 0 1 10,10 v26 h-340 z" fill="#047857"/>
+    <text x="800" y="315" text-anchor="middle" dominant-baseline="central" font-size="17" font-weight="700" fill="#FFFFFF">deck_card_entries</text>
+    <text x="800" y="329" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#FFFFFF" opacity="0.85">junction — many-to-many</text>
+    <line x1="642" y1="356" x2="958" y2="356" stroke="#F3F4F6" stroke-width="1"/>
+    <rect x="642" y="336" width="28" height="16" rx="3" fill="#D97706"/>
+    <text x="656" y="344" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="#FFFFFF">PK</text>
+    <text x="680" y="344" dominant-baseline="central" font-size="13" font-weight="700" fill="#111827">id</text>
+    <text x="956" y="344" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">INTEGER</text>
+    <rect x="631" y="356" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="642" y1="380" x2="958" y2="380" stroke="#F3F4F6" stroke-width="1"/>
+    <rect x="642" y="360" width="28" height="16" rx="3" fill="#FFFFFF" stroke="#6B7280" stroke-width="1"/>
+    <text x="656" y="368" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="#6B7280">FK</text>
+    <text x="680" y="368" dominant-baseline="central" font-size="13" font-weight="600" fill="#1F2937">deck_id</text>
+    <text x="956" y="368" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">INTEGER</text>
+    <line x1="642" y1="404" x2="958" y2="404" stroke="#F3F4F6" stroke-width="1"/>
+    <rect x="642" y="384" width="28" height="16" rx="3" fill="#FFFFFF" stroke="#6B7280" stroke-width="1"/>
+    <text x="656" y="392" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="#6B7280">FK</text>
+    <text x="680" y="392" dominant-baseline="central" font-size="13" font-weight="600" fill="#1F2937">card_id</text>
+    <text x="956" y="392" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="631" y="404" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="642" y1="428" x2="958" y2="428" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="680" y="416" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">section</text>
+    <text x="956" y="416" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <line x1="642" y1="452" x2="958" y2="452" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="680" y="440" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">quantity</text>
+    <text x="956" y="440" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">INTEGER</text>
+    <rect x="631" y="452" width="338" height="24" fill="#F9FAFB"/>
+    <text x="680" y="464" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">sort_order</text>
+    <text x="956" y="464" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">INTEGER</text>
+    <line x1="642" y1="476" x2="958" y2="476" stroke="#047857" stroke-width="1" opacity="0.4"/>
+    <text x="800" y="490" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="600" fill="#047857">UNIQUE (deck_id, card_id, section)</text>
+  </g>
+  <g id="table-cards">
+    <rect x="1140" y="142" width="340" height="516" rx="10" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.5" filter="url(#shadow)"/>
+    <path d="M1140,152 a10,10 0 0 1 10,-10 h320 a10,10 0 0 1 10,10 v26 h-340 z" fill="#1E40AF"/>
+    <text x="1310" y="161" text-anchor="middle" dominant-baseline="central" font-size="17" font-weight="700" fill="#FFFFFF">cards</text>
+    <text x="1310" y="175" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#FFFFFF" opacity="0.85">Scryfall cache · 30-day TTL</text>
+    <line x1="1152" y1="202" x2="1468" y2="202" stroke="#F3F4F6" stroke-width="1"/>
+    <rect x="1152" y="182" width="28" height="16" rx="3" fill="#D97706"/>
+    <text x="1166" y="190" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="#FFFFFF">PK</text>
+    <text x="1190" y="190" dominant-baseline="central" font-size="13" font-weight="700" fill="#111827">id</text>
+    <text x="1466" y="190" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="1141" y="202" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="1152" y1="226" x2="1468" y2="226" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="214" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">name</text>
+    <text x="1466" y="214" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <line x1="1152" y1="250" x2="1468" y2="250" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="238" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">mana_cost</text>
+    <text x="1466" y="238" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="1141" y="250" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="1152" y1="274" x2="1468" y2="274" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="262" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">cmc</text>
+    <text x="1466" y="262" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">REAL</text>
+    <line x1="1152" y1="298" x2="1468" y2="298" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="286" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">type_line</text>
+    <text x="1466" y="286" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="1141" y="298" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="1152" y1="322" x2="1468" y2="322" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="310" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">oracle_text</text>
+    <text x="1466" y="310" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <line x1="1152" y1="346" x2="1468" y2="346" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="334" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">colors</text>
+    <text x="1466" y="334" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="1141" y="346" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="1152" y1="370" x2="1468" y2="370" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="358" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">color_identity</text>
+    <text x="1466" y="358" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <line x1="1152" y1="394" x2="1468" y2="394" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="382" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">image_small</text>
+    <text x="1466" y="382" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="1141" y="394" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="1152" y1="418" x2="1468" y2="418" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="406" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">image_normal</text>
+    <text x="1466" y="406" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <line x1="1152" y1="442" x2="1468" y2="442" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="430" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">image_png</text>
+    <text x="1466" y="430" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="1141" y="442" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="1152" y1="466" x2="1468" y2="466" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="454" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">set_name</text>
+    <text x="1466" y="454" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <line x1="1152" y1="490" x2="1468" y2="490" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="478" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">set_code</text>
+    <text x="1466" y="478" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="1141" y="490" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="1152" y1="514" x2="1468" y2="514" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="502" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">rarity</text>
+    <text x="1466" y="502" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <line x1="1152" y1="538" x2="1468" y2="538" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="526" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">power</text>
+    <text x="1466" y="526" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="1141" y="538" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="1152" y1="562" x2="1468" y2="562" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="550" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">toughness</text>
+    <text x="1466" y="550" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <line x1="1152" y1="586" x2="1468" y2="586" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="574" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">layout</text>
+    <text x="1466" y="574" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="1141" y="586" width="338" height="24" fill="#F9FAFB"/>
+    <line x1="1152" y1="610" x2="1468" y2="610" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="598" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">card_faces_json</text>
+    <text x="1466" y="598" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <line x1="1152" y1="634" x2="1468" y2="634" stroke="#F3F4F6" stroke-width="1"/>
+    <text x="1190" y="622" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">scryfall_uri</text>
+    <text x="1466" y="622" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+    <rect x="1141" y="634" width="338" height="24" fill="#F9FAFB"/>
+    <text x="1190" y="646" dominant-baseline="central" font-size="13" font-weight="500" fill="#1F2937">cached_at</text>
+    <text x="1466" y="646" text-anchor="end" dominant-baseline="central" font-size="12" fill="#6B7280" font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace">TEXT</text>
+  </g>
+  <g id="rel-decks-entries">
+    <path d="M460,358 C 520,358 570,368 630,368" fill="none" stroke="#525252" stroke-width="1.6" marker-start="url(#card-one)" marker-end="url(#card-many)"/>
+    <text x="545" y="344" text-anchor="middle" font-size="11" fill="#525252" font-weight="600">1 — N</text>
+    <text x="545" y="362" text-anchor="middle" font-size="10" fill="#9CA3AF" font-style="italic">ON DELETE CASCADE</text>
+  </g>
+  <g id="rel-cards-entries">
+    <path d="M1140,190 C 1080,190 1030,392 970,392" fill="none" stroke="#525252" stroke-width="1.6" marker-start="url(#card-one)" marker-end="url(#card-many)"/>
+    <text x="1063" y="283" text-anchor="middle" font-size="11" fill="#525252" font-weight="600">1 — N</text>
+    <text x="1063" y="299" text-anchor="middle" font-size="10" fill="#9CA3AF" font-style="italic">ON DELETE CASCADE</text>
+  </g>
+  <g id="legend" transform="translate(80, 712)">
+  <text x="0" y="0" font-size="13" font-weight="700" fill="#1A1206">Legend</text>
+  <rect x="70" y="-10" width="28" height="16" rx="3" fill="#D97706"/>
+  <text x="84" y="-2" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="#FFFFFF">PK</text>
+  <text x="106" y="-2" dominant-baseline="central" font-size="12" fill="#424242">primary key</text>
+  <rect x="210" y="-10" width="28" height="16" rx="3" fill="#FFFFFF" stroke="#6B7280"/>
+  <text x="224" y="-2" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="#6B7280">FK</text>
+  <text x="246" y="-2" dominant-baseline="central" font-size="12" fill="#424242">foreign key</text>
+  <line x1="345" y1="-6" x2="385" y2="-6" stroke="#525252" stroke-width="1.6" marker-end="url(#card-one)"/>
+  <text x="395" y="-2" dominant-baseline="central" font-size="12" fill="#424242">one</text>
+  <line x1="445" y1="-6" x2="485" y2="-6" stroke="#525252" stroke-width="1.6" marker-end="url(#card-many)"/>
+  <text x="503" y="-2" dominant-baseline="central" font-size="12" fill="#424242">many (crow’s foot)</text>
+  </g>
+  <g id="notes" transform="translate(80, 752)">
+  <text x="0" y="0" font-size="11" font-weight="700" fill="#374151">Notes</text>
+  <text x="0" y="18" font-size="11" fill="#6B7280">•  decks.id is AUTOINCREMENT  ·  cards.id is the Scryfall card UUID (TEXT)  ·  timestamps default to datetime(’now’)</text>
+  <text x="0" y="34" font-size="11" fill="#6B7280">•  cards.colors / color_identity / card_faces_json are JSON-encoded TEXT columns (decoded to Python lists at read time)</text>
+  <text x="0" y="50" font-size="11" fill="#6B7280">•  All columns are NOT NULL with defaults (section → ’main’, quantity → 1, format → ’casual’)  ·  PRAGMA foreign_keys = ON</text>
+  </g>
+</svg>

@@ -1,0 +1,208 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" font-family="'Helvetica Neue', Arial, sans-serif">
+  <title>MTG Deck Builder — Data Flow</title>
+  <desc>Request and data flow: browser, FastAPI application (templates, routers, business logic, SQLite via aiosqlite), Scryfall API for card data, and Scryfall CDN for card images.</desc>
+
+  <defs>
+    <marker id="arr-blue"   viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3B82F6"/></marker>
+    <marker id="arr-amber"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#C9A961"/></marker>
+    <marker id="arr-red"    viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#DC2626"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#A21CAF"/></marker>
+    <marker id="arr-green"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#16A34A"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="2"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="900" fill="#FAFAFA"/>
+
+  <!-- Header -->
+  <text x="80" y="58" font-size="30" font-weight="700" fill="#1A1206">MTG Deck Builder — Data Flow</text>
+  <text x="80" y="84" font-size="15" fill="#6B6B6B">FastAPI  ·  SQLite (aiosqlite)  ·  Scryfall  ·  server-rendered, no SPA</text>
+  <line x1="80" y1="104" x2="1520" y2="104" stroke="#E5E5E5" stroke-width="1"/>
+
+  <!-- ============== BROWSER (left) ============== -->
+  <g id="browser" filter="url(#shadow)">
+    <rect x="80" y="410" width="170" height="130" rx="12" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2"/>
+    <text x="165" y="450" text-anchor="middle" font-size="22" font-weight="600" fill="#1E3A8A">Browser</text>
+    <text x="165" y="476" text-anchor="middle" font-size="12" fill="#3B82F6">single user · no login</text>
+    <text x="165" y="496" text-anchor="middle" font-size="12" fill="#3B82F6">server-rendered HTML</text>
+    <text x="165" y="516" text-anchor="middle" font-size="11" fill="#3B82F6">vanilla JS · SortableJS</text>
+    <text x="165" y="532" text-anchor="middle" font-size="11" fill="#3B82F6">Chart.js · Mana font</text>
+  </g>
+
+  <!-- ============== FASTAPI APP (center) ============== -->
+  <g id="app">
+    <rect x="320" y="180" width="820" height="650" rx="14" fill="#FFFCF2" stroke="#C9A961" stroke-width="2.5" filter="url(#shadow)"/>
+    <path d="M320,194 a14,14 0 0 1 14,-14 h792 a14,14 0 0 1 14,14 v30 h-820 z" fill="#C9A961"/>
+    <text x="730" y="210" text-anchor="middle" font-size="17" font-weight="600" fill="#1A1206">FastAPI Application  ·  uvicorn (single worker)  ·  app/main.py</text>
+
+    <!-- Layer 1: HTTP Boundary -->
+    <rect x="340" y="232" width="780" height="90" rx="8" fill="#FFFDF3" stroke="#E5D9A8" stroke-width="1"/>
+    <text x="356" y="254" font-size="12" font-weight="700" fill="#8B6914" letter-spacing="1">HTTP BOUNDARY</text>
+    <g>
+      <rect x="356" y="266" width="372" height="48" rx="6" fill="#FFF8E1" stroke="#C9A961"/>
+      <text x="542" y="287" text-anchor="middle" font-size="14" font-weight="600" fill="#1A1206">Jinja2 Templates</text>
+      <text x="542" y="305" text-anchor="middle" font-size="11" fill="#6B6B6B">server-rendered HTML responses</text>
+    </g>
+    <g>
+      <rect x="740" y="266" width="372" height="48" rx="6" fill="#FFF8E1" stroke="#C9A961"/>
+      <text x="926" y="287" text-anchor="middle" font-size="14" font-weight="600" fill="#1A1206">Static Files</text>
+      <text x="926" y="305" text-anchor="middle" font-size="11" fill="#6B6B6B">/static/*  ·  CSS · JS · favicon</text>
+    </g>
+
+    <!-- Layer 2: Routers -->
+    <rect x="340" y="338" width="780" height="95" rx="8" fill="#FFFDF3" stroke="#E5D9A8" stroke-width="1"/>
+    <text x="356" y="360" font-size="12" font-weight="700" fill="#8B6914" letter-spacing="1">ROUTERS</text>
+    <g>
+      <rect x="356" y="372" width="186" height="52" rx="6" fill="#FFF8E1" stroke="#C9A961"/>
+      <text x="449" y="392" text-anchor="middle" font-size="14" font-weight="600" fill="#1A1206">pages.py</text>
+      <text x="449" y="410" text-anchor="middle" font-size="11" fill="#6B6B6B">/  ·  /decks/new  ·  /decks/{id}</text>
+    </g>
+    <g>
+      <rect x="552" y="372" width="186" height="52" rx="6" fill="#FFF8E1" stroke="#C9A961"/>
+      <text x="645" y="392" text-anchor="middle" font-size="14" font-weight="600" fill="#1A1206">cards.py</text>
+      <text x="645" y="410" text-anchor="middle" font-size="11" fill="#6B6B6B">search · autocomplete · {id}</text>
+    </g>
+    <g>
+      <rect x="748" y="372" width="186" height="52" rx="6" fill="#FFF8E1" stroke="#C9A961"/>
+      <text x="841" y="392" text-anchor="middle" font-size="14" font-weight="600" fill="#1A1206">decks.py</text>
+      <text x="841" y="410" text-anchor="middle" font-size="11" fill="#6B6B6B">entries · move · stats</text>
+    </g>
+    <g>
+      <rect x="944" y="372" width="176" height="52" rx="6" fill="#FFF8E1" stroke="#C9A961"/>
+      <text x="1032" y="392" text-anchor="middle" font-size="14" font-weight="600" fill="#1A1206">export.py</text>
+      <text x="1032" y="410" text-anchor="middle" font-size="11" fill="#6B6B6B">txt · mtgo · csv</text>
+    </g>
+
+    <!-- Layer 3: Business Logic (ScryfallClient on RIGHT for clean exit to API) -->
+    <rect x="340" y="448" width="780" height="150" rx="8" fill="#FFFDF3" stroke="#E5D9A8" stroke-width="1"/>
+    <text x="356" y="470" font-size="12" font-weight="700" fill="#8B6914" letter-spacing="1">BUSINESS LOGIC</text>
+    <g>
+      <rect x="356" y="482" width="240" height="104" rx="6" fill="#F3F4F6" stroke="#9CA3AF" stroke-width="1.5"/>
+      <text x="476" y="505" text-anchor="middle" font-size="14" font-weight="600" fill="#1F2937">Pure Helpers</text>
+      <text x="476" y="527" text-anchor="middle" font-size="11" fill="#6B6B6B">commander.py — legality</text>
+      <text x="476" y="545" text-anchor="middle" font-size="11" fill="#6B6B6B">stats.py — mana curve · colors</text>
+      <text x="476" y="563" text-anchor="middle" font-size="11" fill="#6B6B6B">export.py — text · MTGO · CSV</text>
+      <text x="476" y="581" text-anchor="middle" font-size="10" fill="#6B6B6B" font-style="italic">no I/O · no await</text>
+    </g>
+    <g>
+      <rect x="608" y="482" width="240" height="104" rx="6" fill="#FFF" stroke="#C9A961" stroke-width="1.5"/>
+      <text x="728" y="505" text-anchor="middle" font-size="14" font-weight="600" fill="#1A1206">Recommend Engine</text>
+      <text x="728" y="527" text-anchor="middle" font-size="11" fill="#6B6B6B">recommend.py</text>
+      <text x="728" y="545" text-anchor="middle" font-size="11" fill="#6B6B6B">staples + theme detection</text>
+      <text x="728" y="563" text-anchor="middle" font-size="11" fill="#6B6B6B">concurrent Scryfall fans</text>
+      <text x="728" y="581" text-anchor="middle" font-size="10" fill="#8B5FBF" font-style="italic">[cache · 5 min · 10 decks]</text>
+    </g>
+    <g>
+      <rect x="860" y="482" width="260" height="104" rx="6" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
+      <text x="990" y="505" text-anchor="middle" font-size="14" font-weight="600" fill="#991B1B">ScryfallClient</text>
+      <text x="990" y="527" text-anchor="middle" font-size="11" fill="#B91C1C">scryfall.py · async HTTPX</text>
+      <text x="990" y="545" text-anchor="middle" font-size="11" fill="#6B6B6B">throttle 150ms · retry ×3</text>
+      <text x="990" y="563" text-anchor="middle" font-size="11" fill="#6B6B6B">normalize_card → DB cache</text>
+      <text x="990" y="581" text-anchor="middle" font-size="10" fill="#8B5FBF" font-style="italic">[autocomplete cache · 5 min]</text>
+    </g>
+
+    <!-- Layer 4: Database -->
+    <rect x="340" y="616" width="780" height="150" rx="8" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+    <text x="356" y="638" font-size="12" font-weight="700" fill="#166534" letter-spacing="1">DATABASE LAYER</text>
+    <text x="730" y="664" text-anchor="middle" font-size="15" font-weight="600" fill="#166534">database.py  ·  aiosqlite Connection (module-level singleton)</text>
+    <text x="730" y="686" text-anchor="middle" font-size="11" fill="#16A34A">execute · fetchone · fetchall · upsert_card · move_entry    ·    atomic transactions (BEGIN / COMMIT / ROLLBACK)</text>
+    <text x="730" y="710" text-anchor="middle" font-size="11" fill="#16A34A" font-style="italic">3 tables:  decks  ·  cards (30-day cache)  ·  deck_card_entries  (FK cascade, unique deck+card+section)</text>
+    <text x="730" y="734" text-anchor="middle" font-size="10" fill="#16A34A" font-style="italic">single uvicorn worker — module-level singleton must not diverge across processes</text>
+    <text x="730" y="752" text-anchor="middle" font-size="10" fill="#16A34A" font-style="italic">two caching tiers: SQLite (persistent, 30-day) + in-memory (per-process, 5-minute)</text>
+
+    <!-- Internal layer connectors (subtle, centered) -->
+    <path d="M 730,324 L 730,336" fill="none" stroke="#C9A961" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+    <path d="M 730,435 L 730,446" fill="none" stroke="#C9A961" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+    <path d="M 730,600 L 730,614" fill="none" stroke="#C9A961" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+  </g>
+
+  <!-- ============== SCRYFALL API (right top) ============== -->
+  <g id="scryfall-api" filter="url(#shadow)">
+    <rect x="1240" y="200" width="280" height="140" rx="12" fill="#FEF2F2" stroke="#DC2626" stroke-width="2"/>
+    <text x="1380" y="234" text-anchor="middle" font-size="20" font-weight="600" fill="#991B1B">Scryfall API</text>
+    <text x="1380" y="260" text-anchor="middle" font-size="13" fill="#DC2626">api.scryfall.com</text>
+    <text x="1380" y="284" text-anchor="middle" font-size="12" fill="#6B6B6B">card data · search · autocomplete</text>
+    <text x="1380" y="304" text-anchor="middle" font-size="11" fill="#6B6B6B">source of truth</text>
+    <text x="1380" y="324" text-anchor="middle" font-size="11" fill="#6B6B6B" font-style="italic">10 req/s limit · app throttles ~6.6/s</text>
+  </g>
+
+  <!-- ============== SCRYFALL CDN (left, below browser) ============== -->
+  <g id="scryfall-cdn" filter="url(#shadow)">
+    <rect x="80" y="600" width="170" height="130" rx="12" fill="#FDF4FF" stroke="#A21CAF" stroke-width="2"/>
+    <text x="165" y="634" text-anchor="middle" font-size="17" font-weight="600" fill="#86198F">Image CDN</text>
+    <text x="165" y="660" text-anchor="middle" font-size="11" fill="#A21CAF">cards.scryfall.images</text>
+    <text x="165" y="680" text-anchor="middle" font-size="11" fill="#6B6B6B">card image URLs</text>
+    <text x="165" y="702" text-anchor="middle" font-size="10" fill="#6B6B6B" font-style="italic">browser loads directly</text>
+    <text x="165" y="718" text-anchor="middle" font-size="10" fill="#6B6B6B" font-style="italic">no rate limit</text>
+  </g>
+
+  <!-- ============== magic.db (right bottom) ============== -->
+  <g id="magicdb" filter="url(#shadow)">
+    <rect x="1240" y="580" width="280" height="140" rx="12" fill="#F0FDF4" stroke="#16A34A" stroke-width="2"/>
+    <text x="1380" y="614" text-anchor="middle" font-size="20" font-weight="600" fill="#166534">magic.db</text>
+    <text x="1380" y="640" text-anchor="middle" font-size="13" fill="#16A34A">SQLite file (local)</text>
+    <text x="1380" y="662" text-anchor="middle" font-size="12" fill="#6B6B6B">decks · cards · entries</text>
+    <text x="1380" y="684" text-anchor="middle" font-size="11" fill="#6B6B6B">Docker: named volume magic-db</text>
+    <text x="1380" y="704" text-anchor="middle" font-size="11" fill="#6B6B6B" font-style="italic">survives rebuilds &amp; <tspan font-weight="600">docker compose down</tspan></text>
+  </g>
+
+  <!-- ============== ARROWS ============== -->
+
+  <!-- Browser → App -->
+  <path d="M 250,470 L 320,470" fill="none" stroke="#3B82F6" stroke-width="2.5" marker-end="url(#arr-blue)"/>
+  <text x="285" y="460" text-anchor="middle" font-size="11" fill="#1E3A8A" font-weight="500">HTML · JSON</text>
+
+  <!-- App → Browser (response) -->
+  <path d="M 320,510 L 250,510" fill="none" stroke="#3B82F6" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr-blue)"/>
+  <text x="285" y="528" text-anchor="middle" font-size="11" fill="#1E3A8A" font-style="italic">response</text>
+
+  <!-- Browser → Scryfall CDN (short vertical: browser loads images directly) -->
+  <path d="M 165,540 L 165,600" fill="none" stroke="#A21CAF" stroke-width="2" marker-end="url(#arr-purple)"/>
+  <text x="178" y="568" font-size="11" fill="#86198F" font-style="italic" font-weight="500">card images</text>
+  <text x="178" y="584" font-size="10" fill="#86198F" font-style="italic">(direct · bypasses app)</text>
+
+  <!-- ScryfallClient → Scryfall API (clean exit through the right gap) -->
+  <path d="M 1120,525 C 1180,525 1180,255 1240,255" fill="none" stroke="#DC2626" stroke-width="2" marker-end="url(#arr-red)"/>
+  <text x="1195" y="388" text-anchor="middle" font-size="11" fill="#991B1B" font-style="italic">cache miss → fetch</text>
+
+  <!-- Scryfall API → ScryfallClient (response) -->
+  <path d="M 1240,295 C 1180,295 1180,555 1120,555" fill="none" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr-red)"/>
+
+  <!-- Database → magic.db -->
+  <path d="M 1120,675 L 1240,660" fill="none" stroke="#16A34A" stroke-width="2.5" marker-end="url(#arr-green)"/>
+  <text x="1180" y="648" text-anchor="middle" font-size="11" fill="#166534" font-weight="500">SQL · async</text>
+
+  <!-- magic.db → Database (results) -->
+  <path d="M 1240,695 L 1120,705" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr-green)"/>
+
+  <!-- ============== LEGEND ============== -->
+  <g id="legend" transform="translate(80, 858)">
+    <text x="0" y="0" font-size="13" font-weight="700" fill="#1A1206">Legend</text>
+
+    <line x1="70" y1="-4" x2="108" y2="-4" stroke="#525252" stroke-width="2" marker-end="url(#arr-amber)"/>
+    <text x="116" y="0" font-size="12" fill="#424242">request</text>
+
+    <line x1="195" y1="-4" x2="233" y2="-4" stroke="#525252" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr-amber)"/>
+    <text x="241" y="0" font-size="12" fill="#424242">response</text>
+
+    <rect x="325" y="-11" width="14" height="14" rx="2" fill="#EFF6FF" stroke="#3B82F6"/>
+    <text x="345" y="0" font-size="12" fill="#424242">client</text>
+
+    <rect x="402" y="-11" width="14" height="14" rx="2" fill="#FFFCF2" stroke="#C9A961"/>
+    <text x="422" y="0" font-size="12" fill="#424242">app server</text>
+
+    <rect x="505" y="-11" width="14" height="14" rx="2" fill="#FEF2F2" stroke="#DC2626"/>
+    <text x="525" y="0" font-size="12" fill="#424242">external API</text>
+
+    <rect x="615" y="-11" width="14" height="14" rx="2" fill="#FDF4FF" stroke="#A21CAF"/>
+    <text x="635" y="0" font-size="12" fill="#424242">image CDN</text>
+
+    <rect x="720" y="-11" width="14" height="14" rx="2" fill="#F0FDF4" stroke="#16A34A"/>
+    <text x="740" y="0" font-size="12" fill="#424242">data store</text>
+  </g>
+</svg>

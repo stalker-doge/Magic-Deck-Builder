@@ -51,3 +51,6 @@ desktop.ini
 
 # --- Claude Code (local agent state) ---
 .claude/
+
+# added by backup-guard
+node_modules/
